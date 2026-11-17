@@ -1,0 +1,55 @@
+name: Windows
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install FFmpeg for export tests
+        shell: pwsh
+        run: |
+          choco install ffmpeg --yes --no-progress
+          if ($LASTEXITCODE -ne 0) { throw 'FFmpeg installation failed.' }
+      - name: Test and package
+        shell: pwsh
+        run: ./scripts/PrepararRelease.ps1
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: LooperMaster-windows
+          path: dist/*
+          if-no-files-found: error
+  draft-release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: validate
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Package validated source
+        shell: pwsh
+        run: ./scripts/PrepararRelease.ps1 -OmitirPruebas
+      - name: Create draft release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $assets = @(Get-ChildItem dist -File | ForEach-Object FullName)
+          gh release create $env:RELEASE_TAG @assets --verify-tag --draft --title "LooperMaster $env:RELEASE_TAG" --notes-file RELEASE_NOTES.md
+          if ($LASTEXITCODE -ne 0) { throw 'Draft release creation failed.' }

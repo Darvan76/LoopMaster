@@ -1,0 +1,9 @@
+/versiones-anteriores/
+/dist/
+*.exe
+*.pdb
+/.LooperMaster-*/
+/docs/*.png
+/docs/DISENO.md
+.vs/
+*.user
