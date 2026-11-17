@@ -700,7 +700,7 @@ namespace LooperMaster
         private static void CheckRepeatedVideo(string ffmpeg, string path)
         {
             byte[] frames = Run(ffmpeg, new[] { "-v", "error", "-i", path, "-vf",
-                "select='eq(n,0)+eq(n,48)+eq(n,96)',scale=64:48", "-vsync", "0", "-pix_fmt", "rgb24", "-f", "rawvideo", "pipe:1" });
+                "select='eq(n,0)+eq(n,48)+eq(n,96)',scale=64:48", "-fps_mode", "passthrough", "-pix_fmt", "rgb24", "-f", "rawvideo", "pipe:1" });
             int frameBytes = 64 * 48 * 3;
             Require(frames.Length == frameBytes * 3, "No se pudieron extraer tres fotogramas equivalentes.");
             for (int frame = 1; frame < 3; frame++)
